@@ -1,0 +1,48 @@
+package security
+
+import (
+	"log"
+	"net"
+)
+
+type HoneypotTrap struct {
+	ListenPort string
+}
+
+func NewHoneypot(port string) *HoneypotTrap {
+	return &HoneypotTrap{ListenPort: port}
+}
+
+func (hp *HoneypotTrap) StartHoneypotListener() {
+	listener, err := net.Listen("tcp", ":"+hp.ListenPort)
+	if err != nil {
+		log.Printf("[Honeypot] Failed to bind decoy port %s: %v", hp.ListenPort, err)
+		return
+	}
+	defer listener.Close()
+
+	log.Printf("[HONEYPOT ACTIVE] Decoy trap listening on port %s for unauthorized scanners...", hp.ListenPort)
+
+	for {
+		conn, err := listener.Accept()
+		if err != nil {
+			continue
+		}
+		remoteAddr := conn.RemoteAddr().String()
+		log.Printf("[ALERT] HONEYPOT TRIGGERED! Unauthorized connection probe detected from IP: %s", remoteAddr)
+		
+		// Immediately drop and log suspicious traffic source
+		_, _ = conn.Write([]byte("Access Denied. Incident logged.\n"))
+		_ = conn.Close()
+		
+		// Optional: Auto-ban via iptables
+		go hp.banIP(remoteAddr)
+	}
+}
+
+func (hp *HoneypotTrap) banIP(addr string) {
+	host, _, _ := net.SplitHostPort(addr)
+	log.Printf("[Security] Automatically issuing firewall block rule for intruder IP: %s", host)
+	cmd := exec.Command("iptables", "-A", "INPUT", "-s", host, "-j", "DROP")
+	_ = cmd.Run()
+}
