@@ -1,0 +1,60 @@
+package resilience
+
+import (
+	"context"
+	"log"
+	"sync"
+	"time"
+)
+
+type MiniOn4NemShadow struct {
+	mu            sync.RWMutex
+	isPrimary     bool
+	lastHeartbeat time.Time
+	sharedState   map[string]interface{}
+	failoverLimit time.Duration
+}
+
+func NewMiniBackupShadow() *MiniOn4NemShadow {
+	return &MiniOn4NemShadow{
+		isPrimary:     false,
+		lastHeartbeat: time.Now(),
+		sharedState:   make(map[string]interface{}),
+		failoverLimit: 1500 * time.Millisecond, // 1.5s tolerance for zero-latency switch
+	}
+}
+
+// SyncState receives real-time state delta packets from the primary On4Nem instance
+func (m *MiniOn4NemShadow) SyncState(stateKey string, data interface{}) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	m.sharedState[stateKey] = data
+	m.lastHeartbeat = time.Now()
+}
+
+// StartFailoverSentinel monitors primary health and triggers instant promotion if down
+func (m *MiniOn4NemShadow) StartFailoverSentinel(ctx context.Context, promoteCallback func()) {
+	ticker := time.NewTicker(500 * time.Millisecond)
+	go func() {
+		for {
+			select {
+			case <-ctx.Done():
+				ticker.Stop()
+				return
+			case <-ticker.C:
+				m.mu.Lock()
+				elapsed := time.Since(m.lastHeartbeat)
+				if !m.isPrimary && elapsed > m.failoverLimit {
+					log.Printf("[MINI-ON4NEM ALERT] Primary node heartbeat lost for %v! Initiating instant zero-latency failover...", elapsed)
+					m.isPrimary = true
+					m.mu.Unlock()
+					
+					// Execute rapid promotion and takeover of execution loops
+					promoteCallback()
+					return
+				}
+				m.mu.Unlock()
+			}
+		}
+	}()
+}
