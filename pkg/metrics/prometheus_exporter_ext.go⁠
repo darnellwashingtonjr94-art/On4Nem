@@ -1,0 +1,11 @@
+package metrics
+
+import "log"
+
+type AdvancedPrometheusCollector struct {
+	Namespace string
+}
+
+func (apc *AdvancedPrometheusCollector) ExportArbitrageLatencyMetric(latencyMs float64) {
+	log.Printf("[Prometheus] Exporting live arbitrage execution latency: %.2f ms", latencyMs)
+}
