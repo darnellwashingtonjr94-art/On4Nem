@@ -1,0 +1,49 @@
+name: On4Nem CI/CD Pipeline
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+
+jobs:
+  validate-and-build:
+    name: Test and Compile On4Nem Engine
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.22'
+          cache: true
+
+      - name: Download Go Dependencies
+        run: go mod download
+
+      - name: Run Code Linter
+        uses: golangci/golangci-lint-action@v6
+        with:
+          version: latest
+          args: --timeout=5m
+
+      - name: Run Unit & Integration Tests
+        run: |
+          echo "Executing test suites with race detector enabled..."
+          go test -v -race ./...
+
+      - name: Build Production Binary
+        run: |
+          echo "Compiling optimized standalone binary for Monad node infrastructure..."
+          mkdir -p bin
+          CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags="-s -w" -o bin/on4nem cmd/agent-core/*.go
+          echo "Build complete: bin/on4nem successfully compiled."
+
+      - name: Archive Production Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: on4nem-linux-amd64
+          path: bin/on4nem
