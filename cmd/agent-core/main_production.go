@@ -1,3 +1,18 @@
+//go:build production
+
+package main
+
+// Define DaemonSupervisor to resolve the undefined type error
+type DaemonSupervisor struct {
+    // Add required supervisor fields here
+}
+
+func main() {
+    supervisor := &DaemonSupervisor{}
+    _ = supervisor // Prevents unused variable error
+
+    // Paste your existing production logic here
+}
 package main
 
 import (
