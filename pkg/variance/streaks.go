@@ -1,24 +1,25 @@
 package variance
 
+// StreakTracker measures consecutive wins and losses for variance monitoring.
 type StreakTracker struct {
-	History []bool // true = win, false = loss
+	ConsecutiveWins   int
+	ConsecutiveLosses int
+	MaxLossStreak     int
 }
 
-func (s *StreakTracker) GetCurrentStreak() (string, int) {
-	if len(s.History) == 0 {
-		return "None", 0
-	}
-	lastResult := s.History[len(s.History)-1]
-	count := 0
-	for i := len(s.History) - 1; i >= 0; i-- {
-		if s.History[i] == lastResult {
-			count++
-		} else {
-			break
+func NewStreakTracker() *StreakTracker {
+	return &StreakTracker{}
+}
+
+func (s *StreakTracker) RecordOutcome(isWin bool) {
+	if isWin {
+		s.ConsecutiveWins++
+		s.ConsecutiveLosses = 0
+	} else {
+		s.ConsecutiveLosses++
+		s.ConsecutiveWins = 0
+		if s.ConsecutiveLosses > s.MaxLossStreak {
+			s.MaxLossStreak = s.ConsecutiveLosses
 		}
 	}
-	if lastResult {
-		return "Winning", count
-	}
-	return "Losing", count
 }
