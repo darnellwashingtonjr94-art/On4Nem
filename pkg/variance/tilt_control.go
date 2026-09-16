@@ -1,13 +1,22 @@
 package variance
 
-type StreakTracker struct {
-	ConsecutiveLosses int
-	CurrentMultiplier float64
+type TiltGuard struct {
+	MaxAllowedLossStreak int
+	IsCoolingOff         bool
 }
 
-func (s *StreakTracker) AdjustUnitsOnStreak() float64 {
-	if s.ConsecutiveLosses >= 3 {
-		return 0.5 // Scale down unit size by 50% during cold streaks (Tilt Defense)
+func NewTiltGuard(maxLossStreak int) *TiltGuard {
+	return &TiltGuard{
+		MaxAllowedLossStreak: maxLossStreak,
 	}
-	return 1.0
+}
+
+// EvaluateStatus checks the loss streak using StreakTracker without redefining the type.
+func (tg *TiltGuard) EvaluateStatus(tracker *StreakTracker) bool {
+	if tracker.ConsecutiveLosses >= tg.MaxAllowedLossStreak {
+		tg.IsCoolingOff = true
+		return true // Tilt triggered
+	}
+	tg.IsCoolingOff = false
+	return false
 }
