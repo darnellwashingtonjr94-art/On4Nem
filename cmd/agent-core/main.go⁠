@@ -1,0 +1,9 @@
+package main
+
+import (
+    // your imports...
+)
+
+func main() {
+    // your standard initialization logic...
+}
