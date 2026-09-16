@@ -9,7 +9,7 @@ type Config struct {
 	WSUrls           []string
 }
 
-Fn LoadConfig() *Config {
+Func LoadConfig() *Config {
 	return &Config{
 		GeminiAPIKey:     os.Getenv("GEMINI_API_KEY"),
 		MonadRPCURL:      os.Getenv("MONAD_RPC_URL"),
