@@ -1,18 +1,34 @@
-import "log"
+package execution
+
+import (
+	"fmt"
+	"log"
+)
 
 type SlippageGuard struct {
-	MaxSlippagePct float64
+	MaxAllowedSlippage float64
 }
 
 func NewSlippageGuard(maxSlippage float64) *SlippageGuard {
-	return &SlippageGuard{MaxSlippagePct: maxSlippage}
+	return &SlippageGuard{
+		MaxAllowedSlippage: maxSlippage,
+	}
 }
 
-func (sg *SlippageGuard) ValidatePriceImpact(expectedPrice, executionPrice float64) bool {
-	slippage := (executionPrice - expectedPrice) / expectedPrice
-	if slippage > sg.MaxSlippagePct {
-		log.Printf("SLIPPAGE ALERT: Deviation of %.2f%% exceeds max limit. Aborting trade.", slippage*100)
-		return false
+func (sg *SlippageGuard) ValidateSlippage(expectedPrice, actualPrice float64) error {
+	if expectedPrice <= 0 {
+		return fmt.Errorf("invalid expected price: %.2f", expectedPrice)
 	}
-	return true
+
+	slippage := (actualPrice - expectedPrice) / expectedPrice
+	if slippage < 0 {
+		slippage = -slippage
+	}
+
+	if slippage > sg.MaxAllowedSlippage {
+		log.Printf("Slippage threshold exceeded: %.4f > %.4f\n", slippage, sg.MaxAllowedSlippage)
+		return fmt.Errorf("slippage %.4f exceeds maximum allowed threshold %.4f", slippage, sg.MaxAllowedSlippage)
+	}
+
+	return nil
 }
