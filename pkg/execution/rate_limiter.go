@@ -1,19 +1,31 @@
 package execution
 
 import (
-	"context"
-	"golang.org/x/time/rate"
+	"sync"
 	"time"
 )
 
-type APIThrottle struct {
-	Limiter *rate.Limiter
+type RateLimiter struct {
+	mu           sync.Mutex
+	rate         time.Duration
+	lastExecuted time.Time
 }
 
-func NewAPIThrottle(r rate.Limit, b int) *APIThrottle {
-	return &APIThrottle{Limiter: rate.NewLimiter(r, b)}
+func NewRateLimiter(interval time.Duration) *RateLimiter {
+	return &RateLimiter{
+		rate: interval,
+	}
 }
 
-func (at *APIThrottle) Wait(ctx context.Context) error {
-	return at.Limiter.Wait(ctx)
+func (r *RateLimiter) Allow() bool {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+
+	now := time.Now()
+	if now.Sub(r.lastExecuted) < r.rate {
+		return false
+	}
+
+	r.lastExecuted = now
+	return true
 }
