@@ -3,20 +3,30 @@ package config
 import "os"
 
 type Config struct {
-	GeminiAPIKey     string
-	MonadRPCURL      string
-	MaxExposureLimit float64
-	WSUrls           []string
+	Environment string
+	Port        string
+	MaxSlippage float64
+	DiscordURL  string
 }
 
-Func LoadConfig() *Config {
+// Fix: Replaced 'Fn' typo with 'func'
+func LoadConfig() *Config {
+	env := os.Getenv("APP_ENV")
+	if env == "" {
+		env = "development"
+	}
+
+	port := os.Getenv("PORT")
+	if port == "" {
+		port = "8080"
+	}
+
+	discordURL := os.Getenv("DISCORD_WEBHOOK_URL")
+
 	return &Config{
-		GeminiAPIKey:     os.Getenv("GEMINI_API_KEY"),
-		MonadRPCURL:      os.Getenv("MONAD_RPC_URL"),
-		MaxExposureLimit: 50000.0, // USD limit
-		WSUrls: []string{
-			"wss://clob.polymarket.com/ws",
-			"wss://api.pinnacle.com/stream",
-		},
+		Environment: env,
+		Port:        port,
+		MaxSlippage: 0.02,
+		DiscordURL:  discordURL,
 	}
 }
