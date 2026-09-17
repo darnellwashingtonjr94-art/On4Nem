@@ -21,14 +21,12 @@ jobs:
           go-version: '1.22'
           cache: true
 
-      - name: Download Go Dependencies
-        run: go mod download
-
       - name: Run Code Linter
         uses: golangci/golangci-lint-action@v6
         with:
-          version: latest
+          version: v1.64.8
           args: --timeout=5m
+          skip-cache: true
 
       - name: Run Unit & Integration Tests
         run: |
@@ -39,7 +37,7 @@ jobs:
         run: |
           echo "Compiling optimized standalone binary for Monad node infrastructure..."
           mkdir -p bin
-          CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags="-s -w" -o bin/on4nem cmd/agent-core/*.go
+          CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags="-s -w" -o bin/on4nem ./...
           echo "Build complete: bin/on4nem successfully compiled."
 
       - name: Archive Production Artifacts
