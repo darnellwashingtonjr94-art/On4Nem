@@ -1,0 +1,9 @@
+{
+  "risk_management": {
+    "max_portfolio_drawdown_pct": 0.05,
+    "max_consecutive_losses": 4,
+    "max_single_trade_exposure_usd": 25000.0,
+    "cooldown_period_seconds": 900,
+    "global_stop_loss_pct": 0.02
+  }
+}
