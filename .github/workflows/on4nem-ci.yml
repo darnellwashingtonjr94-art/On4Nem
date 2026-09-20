@@ -19,14 +19,18 @@ jobs:
           go-version: '1.22'
           cache: true
 
-      # ----------------------------------------
-      # FIX: Download dependencies before linting
-      # ----------------------------------------
       - name: Download Go modules
         run: go mod download
 
+      # Pre-compile the Go code to load package caches and avoid missing export data
+      - name: Pre-compile Go Code
+        run: CGO_ENABLED=0 go build ./...
+
+      # Run the linter with CGO explicitly disabled in the environment
       - name: Run Code Linter
         uses: golangci/golangci-lint-action@v6
+        env:
+          CGO_ENABLED: 0
         with:
           version: v1.64.8
           args: --timeout=5m
