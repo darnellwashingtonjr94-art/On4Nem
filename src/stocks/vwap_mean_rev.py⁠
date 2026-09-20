@@ -1,0 +1,18 @@
+import pandas as pd
+import logging
+
+logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
+logger = logging.getLogger("VWAPMeanReversion")
+
+class VWAPMeanReversionStrategy:
+    def __init__(self, rvol_threshold: float = 2.5):
+        self.rvol_threshold = rvol_threshold
+
+    def check_vwap_signal(self, current_rvol: float, price: float, upper_band: float, lower_band: float) -> int:
+        """Trigger Condition: RVOL > 2.5x with price breaking outside 2-sigma VWAP bands."""
+        if current_rvol > self.rvol_threshold:
+            if price > upper_band:
+                return 1  # Breakout long
+            elif price < lower_band:
+                return -1 # Breakout short
+        return 0
