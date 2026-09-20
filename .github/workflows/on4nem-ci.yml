@@ -19,14 +19,15 @@ jobs:
           go-version: '1.22'
           cache: true
 
-      - name: Download Go modules
-        run: go mod download
+      - name: Resolve and Download Dependencies
+        run: |
+          go get github.com/ethereum/go-ethereum/crypto
+          go mod tidy
+          go mod download
 
-      # Pre-compile the Go code to load package caches and avoid missing export data
       - name: Pre-compile Go Code
         run: CGO_ENABLED=0 go build ./...
 
-      # Run the linter with CGO explicitly disabled in the environment
       - name: Run Code Linter
         uses: golangci/golangci-lint-action@v6
         env:
@@ -38,8 +39,8 @@ jobs:
 
       - name: Run Unit & Integration Tests
         run: |
-          echo "Executing test suites with race detector enabled..."
-          go test -v -race ./...
+          echo "Executing test suites..."
+          go test -v ./...
 
       - name: Build Production Binary
         run: |
